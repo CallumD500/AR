@@ -8,7 +8,7 @@ This guide covers deploying your WebAR experience to production.
 
 **Why Vercel?**
 - Zero configuration needed
-- Automatic HTTPS
+- Automatic HTTP
 - Global CDN
 - Perfect for static sites
 - Free tier available
