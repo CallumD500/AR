@@ -233,9 +233,12 @@
         camera-controls
         touch-action="pan-y"
         disable-tap
-        shadow-intensity="1"
-        exposure="1"
-        shadow-softness="0.5"
+        environment-image="neutral"
+        skybox-image="neutral"
+        shadow-intensity="1.2"
+        exposure="1.2"
+        shadow-softness="0.4"
+        tone-mapping="commerce"
         camera-orbit="45deg 75deg 2.5m"
         min-camera-orbit="auto auto 1m"
         max-camera-orbit="auto auto 10m"
@@ -245,6 +248,8 @@
         auto-rotate-delay="3000"
         rotation-per-second="30deg"
         ios-src=""
+        reveal="auto"
+        loading="eager"
     >
         <!-- AR Button (custom) -->
         <button slot="ar-button" id="ar-button" class="ar-button">
