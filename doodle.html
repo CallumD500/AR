@@ -89,7 +89,7 @@
             padding: 15px 20px;
             border-radius: 12px;
             z-index: 999;
-            display: flex;
+            display: none;
             flex-direction: column;
             gap: 12px;
             align-items: center;
@@ -98,24 +98,22 @@
 
         .control-row {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             align-items: center;
-            width: 100%;
-            justify-content: center;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .control-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: #4a9eff;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
-            white-space: nowrap;
         }
 
         .control-btn:active {
@@ -129,13 +127,13 @@
         .slider-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             color: white;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         .slider-container input[type="range"] {
-            width: 120px;
+            width: 100px;
         }
 
         .loading {
@@ -143,10 +141,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 999;
+            z-index: 1001;
             text-align: center;
             color: white;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             padding: 30px;
             border-radius: 16px;
         }
@@ -175,7 +173,7 @@
             color: white;
             padding: 20px;
             border-radius: 12px;
-            z-index: 1001;
+            z-index: 1002;
             max-width: 90%;
             text-align: center;
             display: none;
@@ -183,7 +181,7 @@
 
         .capture-btn {
             position: fixed;
-            bottom: 160px;
+            bottom: 150px;
             right: 20px;
             width: 60px;
             height: 60px;
@@ -193,25 +191,11 @@
             cursor: pointer;
             z-index: 999;
             transition: transform 0.2s;
+            display: none;
         }
 
         .capture-btn:active {
             transform: scale(0.9);
-        }
-
-        @media (max-width: 600px) {
-            .controls {
-                padding: 12px 15px;
-            }
-
-            .slider-container {
-                width: 100%;
-                font-size: 0.8rem;
-            }
-
-            .slider-container input[type="range"] {
-                flex: 1;
-            }
         }
     </style>
 </head>
@@ -219,8 +203,8 @@
     <!-- Instructions overlay -->
     <div id="instructions" class="instructions">
         <h2>✏️ Doodle World AR</h2>
-        <p>Transform your world into hand-drawn sketches!</p>
-        <p style="margin-top: 10px;">Adjust the effect intensity and style below</p>
+        <p>Transform your world into hand-drawn art!</p>
+        <p style="margin-top: 10px; font-size: 0.85em;">Choose a filter style below</p>
         <button class="hide-instructions" onclick="hideInstructions()">Got It</button>
     </div>
 
@@ -235,7 +219,7 @@
 
     <!-- Camera container -->
     <div id="container">
-        <video id="video" autoplay playsinline></video>
+        <video id="video" autoplay playsinline muted></video>
         <canvas id="canvas"></canvas>
     </div>
 
@@ -243,22 +227,17 @@
     <button id="capture-btn" class="capture-btn" title="Take Photo"></button>
 
     <!-- Controls -->
-    <div id="controls" class="controls" style="display: none;">
+    <div id="controls" class="controls">
         <div class="control-row">
-            <button id="sketch-btn" class="control-btn active" onclick="setFilter('sketch')">Sketch</button>
-            <button id="comic-btn" class="control-btn" onclick="setFilter('comic')">Comic</button>
-            <button id="watercolor-btn" class="control-btn" onclick="setFilter('watercolor')">Watercolor</button>
-            <button id="original-btn" class="control-btn" onclick="setFilter('original')">Original</button>
+            <button id="original-btn" class="control-btn active" onclick="setFilter('original')">Original</button>
+            <button id="sketch-btn" class="control-btn" onclick="setFilter('sketch')">Sketch</button>
+            <button id="edge-btn" class="control-btn" onclick="setFilter('edge')">Edge</button>
+            <button id="invert-btn" class="control-btn" onclick="setFilter('invert')">Invert</button>
         </div>
         <div class="slider-container">
-            <label for="edge-slider">Edge:</label>
-            <input type="range" id="edge-slider" min="0" max="100" value="70">
-            <span id="edge-value">70%</span>
-        </div>
-        <div class="slider-container">
-            <label for="color-slider">Color:</label>
-            <input type="range" id="color-slider" min="0" max="100" value="50">
-            <span id="color-value">50%</span>
+            <label for="intensity-slider">Intensity:</label>
+            <input type="range" id="intensity-slider" min="0" max="100" value="80">
+            <span id="intensity-value">80%</span>
         </div>
     </div>
 
@@ -272,22 +251,19 @@
         const errorEl = document.getElementById('error');
         const controlsEl = document.getElementById('controls');
         const captureBtn = document.getElementById('capture-btn');
-        const edgeSlider = document.getElementById('edge-slider');
-        const colorSlider = document.getElementById('color-slider');
-        const edgeValue = document.getElementById('edge-value');
-        const colorValue = document.getElementById('color-value');
+        const intensitySlider = document.getElementById('intensity-slider');
+        const intensityValue = document.getElementById('intensity-value');
 
-        let currentFilter = 'sketch';
-        let edgeIntensity = 0.7;
-        let colorIntensity = 0.5;
-        let animationId = null;
+        let currentFilter = 'original';
+        let intensity = 0.8;
+        let isRunning = false;
 
         function hideInstructions() {
             instructionsEl.style.display = 'none';
         }
 
         function showError(message) {
-            errorEl.textContent = message;
+            errorEl.innerHTML = `<p>${message}</p><p style="margin-top:10px; font-size:0.9em;">Please reload the page and allow camera access.</p>`;
             errorEl.style.display = 'block';
             loadingEl.style.display = 'none';
         }
@@ -298,223 +274,137 @@
             document.getElementById(`${filter}-btn`).classList.add('active');
         }
 
-        // Sobel edge detection
+        // Simple edge detection using difference
         function detectEdges(imageData) {
             const data = imageData.data;
             const width = imageData.width;
             const height = imageData.height;
-            const output = ctx.createImageData(width, height);
-            const outData = output.data;
-
-            const sobelX = [
-                [-1, 0, 1],
-                [-2, 0, 2],
-                [-1, 0, 1]
-            ];
-            const sobelY = [
-                [-1, -2, -1],
-                [0, 0, 0],
-                [1, 2, 1]
-            ];
+            const output = new Uint8ClampedArray(data.length);
 
             for (let y = 1; y < height - 1; y++) {
                 for (let x = 1; x < width - 1; x++) {
-                    let gx = 0, gy = 0;
-
-                    for (let ky = -1; ky <= 1; ky++) {
-                        for (let kx = -1; kx <= 1; kx++) {
-                            const idx = ((y + ky) * width + (x + kx)) * 4;
-                            const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-                            gx += gray * sobelX[ky + 1][kx + 1];
-                            gy += gray * sobelY[ky + 1][kx + 1];
-                        }
-                    }
-
-                    const magnitude = Math.sqrt(gx * gx + gy * gy);
                     const idx = (y * width + x) * 4;
-                    const edge = 255 - Math.min(255, magnitude);
 
-                    outData[idx] = edge;
-                    outData[idx + 1] = edge;
-                    outData[idx + 2] = edge;
-                    outData[idx + 3] = 255;
+                    // Get grayscale value
+                    const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+
+                    // Compare with neighbors
+                    const rightIdx = (y * width + (x + 1)) * 4;
+                    const downIdx = ((y + 1) * width + x) * 4;
+
+                    const rightGray = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                    const downGray = (data[downIdx] + data[downIdx + 1] + data[downIdx + 2]) / 3;
+
+                    const dx = Math.abs(gray - rightGray);
+                    const dy = Math.abs(gray - downGray);
+                    const edge = Math.min(255, (dx + dy) * 2);
+
+                    const edgeVal = 255 - edge;
+                    output[idx] = edgeVal;
+                    output[idx + 1] = edgeVal;
+                    output[idx + 2] = edgeVal;
+                    output[idx + 3] = 255;
                 }
             }
 
-            return output;
+            return new ImageData(output, width, height);
         }
 
-        // Posterize effect
-        function posterize(imageData, levels) {
+        // Apply grayscale
+        function grayscale(imageData) {
             const data = imageData.data;
-            const step = Math.floor(255 / levels);
-
             for (let i = 0; i < data.length; i += 4) {
-                data[i] = Math.floor(data[i] / step) * step;
-                data[i + 1] = Math.floor(data[i + 1] / step) * step;
-                data[i + 2] = Math.floor(data[i + 2] / step) * step;
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                data[i] = avg;
+                data[i + 1] = avg;
+                data[i + 2] = avg;
             }
+            return imageData;
+        }
 
+        // Apply invert
+        function invert(imageData) {
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 255 - data[i];
+                data[i + 1] = 255 - data[i + 1];
+                data[i + 2] = 255 - data[i + 2];
+            }
             return imageData;
         }
 
         // Apply sketch effect
-        function applySketchEffect(sourceData, edgeData) {
-            const output = ctx.createImageData(sourceData.width, sourceData.height);
-            const src = sourceData.data;
+        function sketch(imageData, edgeData) {
+            const src = imageData.data;
             const edge = edgeData.data;
-            const out = output.data;
+            const output = new Uint8ClampedArray(src.length);
 
             for (let i = 0; i < src.length; i += 4) {
-                // Blend original with edges
-                const edgeVal = edge[i];
-                const blend = edgeIntensity;
-
-                out[i] = src[i] * (1 - blend) + edgeVal * blend;
-                out[i + 1] = src[i + 1] * (1 - blend) + edgeVal * blend;
-                out[i + 2] = src[i + 2] * (1 - blend) + edgeVal * blend;
-                out[i + 3] = 255;
+                const blend = intensity;
+                output[i] = src[i] * (1 - blend) + edge[i] * blend;
+                output[i + 1] = src[i + 1] * (1 - blend) + edge[i + 1] * blend;
+                output[i + 2] = src[i + 2] * (1 - blend) + edge[i + 2] * blend;
+                output[i + 3] = 255;
             }
 
-            return output;
+            return new ImageData(output, imageData.width, imageData.height);
         }
 
-        // Apply comic effect
-        function applyComicEffect(sourceData, edgeData) {
-            const posterized = posterize(ctx.createImageData(sourceData.width, sourceData.height), 6);
-            const pData = posterized.data;
-            const src = sourceData.data;
-
-            for (let i = 0; i < src.length; i += 4) {
-                pData[i] = src[i];
-                pData[i + 1] = src[i + 1];
-                pData[i + 2] = src[i + 2];
-                pData[i + 3] = src[i + 3];
-            }
-
-            posterize(posterized, 8);
-
-            const edge = edgeData.data;
-            const out = ctx.createImageData(posterized.width, posterized.height);
-            const outData = out.data;
-
-            for (let i = 0; i < pData.length; i += 4) {
-                const edgeVal = edge[i];
-                const threshold = 200;
-
-                if (edgeVal < threshold) {
-                    outData[i] = 0;
-                    outData[i + 1] = 0;
-                    outData[i + 2] = 0;
-                } else {
-                    outData[i] = pData[i];
-                    outData[i + 1] = pData[i + 1];
-                    outData[i + 2] = pData[i + 2];
-                }
-                outData[i + 3] = 255;
-            }
-
-            return out;
-        }
-
-        // Apply watercolor effect
-        function applyWatercolorEffect(sourceData) {
-            const posterized = ctx.createImageData(sourceData.width, sourceData.height);
-            const src = sourceData.data;
-            const post = posterized.data;
-
-            for (let i = 0; i < src.length; i += 4) {
-                post[i] = src[i];
-                post[i + 1] = src[i + 1];
-                post[i + 2] = src[i + 2];
-                post[i + 3] = src[i + 3];
-            }
-
-            posterize(posterized, 4);
-
-            // Add slight blur effect
-            const blurred = ctx.createImageData(posterized.width, posterized.height);
-            const blur = blurred.data;
-            const width = posterized.width;
-
-            for (let y = 1; y < posterized.height - 1; y++) {
-                for (let x = 1; x < width - 1; x++) {
-                    const idx = (y * width + x) * 4;
-
-                    let r = 0, g = 0, b = 0, count = 0;
-                    for (let ky = -1; ky <= 1; ky++) {
-                        for (let kx = -1; kx <= 1; kx++) {
-                            const i = ((y + ky) * width + (x + kx)) * 4;
-                            r += post[i];
-                            g += post[i + 1];
-                            b += post[i + 2];
-                            count++;
-                        }
-                    }
-
-                    blur[idx] = r / count;
-                    blur[idx + 1] = g / count;
-                    blur[idx + 2] = b / count;
-                    blur[idx + 3] = 255;
-                }
-            }
-
-            return blurred;
-        }
-
-        // Main processing function
+        // Main processing loop
         function processFrame() {
-            if (video.paused || video.ended) {
+            if (!isRunning || video.paused || video.ended) {
+                if (isRunning) {
+                    requestAnimationFrame(processFrame);
+                }
                 return;
             }
 
-            // Draw video frame
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const sourceData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            try {
+                // Draw current video frame to canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            let outputData;
+                // Get image data
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-            if (currentFilter === 'original') {
-                outputData = sourceData;
-            } else {
-                // Detect edges for sketch/comic effects
-                const edgeData = detectEdges(sourceData);
-
+                // Apply filter
                 if (currentFilter === 'sketch') {
-                    outputData = applySketchEffect(sourceData, edgeData);
-                } else if (currentFilter === 'comic') {
-                    outputData = applyComicEffect(sourceData, edgeData);
-                } else if (currentFilter === 'watercolor') {
-                    outputData = applyWatercolorEffect(sourceData);
+                    const edges = detectEdges(imageData);
+                    imageData = sketch(imageData, edges);
+                } else if (currentFilter === 'edge') {
+                    imageData = detectEdges(imageData);
+                } else if (currentFilter === 'invert') {
+                    imageData = invert(imageData);
                 }
+
+                // Put processed image back
+                ctx.putImageData(imageData, 0, 0);
+
+            } catch (err) {
+                console.error('Processing error:', err);
             }
 
-            ctx.putImageData(outputData, 0, 0);
-            animationId = requestAnimationFrame(processFrame);
+            requestAnimationFrame(processFrame);
         }
 
         // Capture photo
         captureBtn.addEventListener('click', () => {
             const link = document.createElement('a');
             link.download = `doodle-world-${Date.now()}.png`;
-            link.href = canvas.toDataURL();
+            link.href = canvas.toDataURL('image/png');
             link.click();
         });
 
-        // Slider controls
-        edgeSlider.addEventListener('input', (e) => {
-            edgeIntensity = e.target.value / 100;
-            edgeValue.textContent = e.target.value + '%';
-        });
-
-        colorSlider.addEventListener('input', (e) => {
-            colorIntensity = e.target.value / 100;
-            colorValue.textContent = e.target.value + '%';
+        // Intensity slider
+        intensitySlider.addEventListener('input', (e) => {
+            intensity = e.target.value / 100;
+            intensityValue.textContent = e.target.value + '%';
         });
 
         // Initialize camera
         async function initCamera() {
             try {
+                loadingText.textContent = 'Requesting camera access...';
+
                 const constraints = {
                     video: {
                         facingMode: 'environment',
@@ -526,22 +416,67 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
 
-                video.addEventListener('loadedmetadata', () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    loadingEl.style.display = 'none';
-                    controlsEl.style.display = 'flex';
-                    processFrame();
-                });
+                loadingText.textContent = 'Loading camera...';
+
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    video.play().then(() => {
+                        // Set canvas size to match video
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+
+                        console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
+
+                        // Hide loading, show controls
+                        loadingEl.style.display = 'none';
+                        controlsEl.style.display = 'flex';
+                        captureBtn.style.display = 'block';
+
+                        // Start processing
+                        isRunning = true;
+                        processFrame();
+
+                        console.log('Doodle filter started successfully');
+                    }).catch(err => {
+                        showError('Failed to start video playback');
+                        console.error('Play error:', err);
+                    });
+                };
+
+                video.onerror = (err) => {
+                    showError('Video error occurred');
+                    console.error('Video error:', err);
+                };
 
             } catch (error) {
                 console.error('Camera error:', error);
-                showError('Camera access denied. Please allow camera permissions.');
+                if (error.name === 'NotAllowedError') {
+                    showError('Camera access denied');
+                } else if (error.name === 'NotFoundError') {
+                    showError('No camera found');
+                } else {
+                    showError('Failed to access camera: ' + error.message);
+                }
             }
         }
 
-        // Start
-        initCamera();
+        // Check browser support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError('Your browser does not support camera access');
+        } else {
+            // Start camera when page loads
+            initCamera();
+        }
+
+        // Handle page visibility
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                isRunning = false;
+            } else {
+                isRunning = true;
+                processFrame();
+            }
+        });
     </script>
 </body>
 </html>

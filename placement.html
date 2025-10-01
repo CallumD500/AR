@@ -229,8 +229,10 @@
         src="./doodles-can-2.glb"
         ar
         ar-modes="webxr scene-viewer quick-look"
+        ar-scale="auto"
         camera-controls
         touch-action="pan-y"
+        disable-tap
         shadow-intensity="1"
         exposure="1"
         shadow-softness="0.5"
@@ -242,6 +244,7 @@
         auto-rotate
         auto-rotate-delay="3000"
         rotation-per-second="30deg"
+        ios-src=""
     >
         <!-- AR Button (custom) -->
         <button slot="ar-button" id="ar-button" class="ar-button">
