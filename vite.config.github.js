@@ -35,6 +35,7 @@ export default defineConfig({
       input: {
         main: './index.html',
         placement: './placement.html',
+        doodle: './doodle.html',
         marker: './marker.html',
         location: './location.html',
       },

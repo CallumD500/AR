@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Doodle World AR - Transform your world into hand-drawn sketches in real-time">
+    <title>Doodle World Filter - AR Experience</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #video {
+            display: none;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.3rem;
+        }
+
+        .instructions p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+        }
+
+        .hide-instructions {
+            margin-top: 15px;
+            padding: 10px 24px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            max-width: 90%;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .control-btn:active {
+            background: #3a8eef;
+        }
+
+        .control-btn.active {
+            background: #764ba2;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .slider-container input[type="range"] {
+            width: 120px;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 16px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 38, 38, 0.95);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 1001;
+            max-width: 90%;
+            text-align: center;
+            display: none;
+        }
+
+        .capture-btn {
+            position: fixed;
+            bottom: 160px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 4px solid #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 999;
+            transition: transform 0.2s;
+        }
+
+        .capture-btn:active {
+            transform: scale(0.9);
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                padding: 12px 15px;
+            }
+
+            .slider-container {
+                width: 100%;
+                font-size: 0.8rem;
+            }
+
+            .slider-container input[type="range"] {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Instructions overlay -->
+    <div id="instructions" class="instructions">
+        <h2>✏️ Doodle World AR</h2>
+        <p>Transform your world into hand-drawn sketches!</p>
+        <p style="margin-top: 10px;">Adjust the effect intensity and style below</p>
+        <button class="hide-instructions" onclick="hideInstructions()">Got It</button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <p id="loading-text">Starting camera...</p>
+    </div>
+
+    <!-- Error message -->
+    <div id="error" class="error"></div>
+
+    <!-- Camera container -->
+    <div id="container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- Capture button -->
+    <button id="capture-btn" class="capture-btn" title="Take Photo"></button>
+
+    <!-- Controls -->
+    <div id="controls" class="controls" style="display: none;">
+        <div class="control-row">
+            <button id="sketch-btn" class="control-btn active" onclick="setFilter('sketch')">Sketch</button>
+            <button id="comic-btn" class="control-btn" onclick="setFilter('comic')">Comic</button>
+            <button id="watercolor-btn" class="control-btn" onclick="setFilter('watercolor')">Watercolor</button>
+            <button id="original-btn" class="control-btn" onclick="setFilter('original')">Original</button>
+        </div>
+        <div class="slider-container">
+            <label for="edge-slider">Edge:</label>
+            <input type="range" id="edge-slider" min="0" max="100" value="70">
+            <span id="edge-value">70%</span>
+        </div>
+        <div class="slider-container">
+            <label for="color-slider">Color:</label>
+            <input type="range" id="color-slider" min="0" max="100" value="50">
+            <span id="color-value">50%</span>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const loadingEl = document.getElementById('loading');
+        const loadingText = document.getElementById('loading-text');
+        const instructionsEl = document.getElementById('instructions');
+        const errorEl = document.getElementById('error');
+        const controlsEl = document.getElementById('controls');
+        const captureBtn = document.getElementById('capture-btn');
+        const edgeSlider = document.getElementById('edge-slider');
+        const colorSlider = document.getElementById('color-slider');
+        const edgeValue = document.getElementById('edge-value');
+        const colorValue = document.getElementById('color-value');
+
+        let currentFilter = 'sketch';
+        let edgeIntensity = 0.7;
+        let colorIntensity = 0.5;
+        let animationId = null;
+
+        function hideInstructions() {
+            instructionsEl.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            loadingEl.style.display = 'none';
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`${filter}-btn`).classList.add('active');
+        }
+
+        // Sobel edge detection
+        function detectEdges(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = ctx.createImageData(width, height);
+            const outData = output.data;
+
+            const sobelX = [
+                [-1, 0, 1],
+                [-2, 0, 2],
+                [-1, 0, 1]
+            ];
+            const sobelY = [
+                [-1, -2, -1],
+                [0, 0, 0],
+                [1, 2, 1]
+            ];
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let gx = 0, gy = 0;
+
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const idx = ((y + ky) * width + (x + kx)) * 4;
+                            const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+                            gx += gray * sobelX[ky + 1][kx + 1];
+                            gy += gray * sobelY[ky + 1][kx + 1];
+                        }
+                    }
+
+                    const magnitude = Math.sqrt(gx * gx + gy * gy);
+                    const idx = (y * width + x) * 4;
+                    const edge = 255 - Math.min(255, magnitude);
+
+                    outData[idx] = edge;
+                    outData[idx + 1] = edge;
+                    outData[idx + 2] = edge;
+                    outData[idx + 3] = 255;
+                }
+            }
+
+            return output;
+        }
+
+        // Posterize effect
+        function posterize(imageData, levels) {
+            const data = imageData.data;
+            const step = Math.floor(255 / levels);
+
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.floor(data[i] / step) * step;
+                data[i + 1] = Math.floor(data[i + 1] / step) * step;
+                data[i + 2] = Math.floor(data[i + 2] / step) * step;
+            }
+
+            return imageData;
+        }
+
+        // Apply sketch effect
+        function applySketchEffect(sourceData, edgeData) {
+            const output = ctx.createImageData(sourceData.width, sourceData.height);
+            const src = sourceData.data;
+            const edge = edgeData.data;
+            const out = output.data;
+
+            for (let i = 0; i < src.length; i += 4) {
+                // Blend original with edges
+                const edgeVal = edge[i];
+                const blend = edgeIntensity;
+
+                out[i] = src[i] * (1 - blend) + edgeVal * blend;
+                out[i + 1] = src[i + 1] * (1 - blend) + edgeVal * blend;
+                out[i + 2] = src[i + 2] * (1 - blend) + edgeVal * blend;
+                out[i + 3] = 255;
+            }
+
+            return output;
+        }
+
+        // Apply comic effect
+        function applyComicEffect(sourceData, edgeData) {
+            const posterized = posterize(ctx.createImageData(sourceData.width, sourceData.height), 6);
+            const pData = posterized.data;
+            const src = sourceData.data;
+
+            for (let i = 0; i < src.length; i += 4) {
+                pData[i] = src[i];
+                pData[i + 1] = src[i + 1];
+                pData[i + 2] = src[i + 2];
+                pData[i + 3] = src[i + 3];
+            }
+
+            posterize(posterized, 8);
+
+            const edge = edgeData.data;
+            const out = ctx.createImageData(posterized.width, posterized.height);
+            const outData = out.data;
+
+            for (let i = 0; i < pData.length; i += 4) {
+                const edgeVal = edge[i];
+                const threshold = 200;
+
+                if (edgeVal < threshold) {
+                    outData[i] = 0;
+                    outData[i + 1] = 0;
+                    outData[i + 2] = 0;
+                } else {
+                    outData[i] = pData[i];
+                    outData[i + 1] = pData[i + 1];
+                    outData[i + 2] = pData[i + 2];
+                }
+                outData[i + 3] = 255;
+            }
+
+            return out;
+        }
+
+        // Apply watercolor effect
+        function applyWatercolorEffect(sourceData) {
+            const posterized = ctx.createImageData(sourceData.width, sourceData.height);
+            const src = sourceData.data;
+            const post = posterized.data;
+
+            for (let i = 0; i < src.length; i += 4) {
+                post[i] = src[i];
+                post[i + 1] = src[i + 1];
+                post[i + 2] = src[i + 2];
+                post[i + 3] = src[i + 3];
+            }
+
+            posterize(posterized, 4);
+
+            // Add slight blur effect
+            const blurred = ctx.createImageData(posterized.width, posterized.height);
+            const blur = blurred.data;
+            const width = posterized.width;
+
+            for (let y = 1; y < posterized.height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    const idx = (y * width + x) * 4;
+
+                    let r = 0, g = 0, b = 0, count = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const i = ((y + ky) * width + (x + kx)) * 4;
+                            r += post[i];
+                            g += post[i + 1];
+                            b += post[i + 2];
+                            count++;
+                        }
+                    }
+
+                    blur[idx] = r / count;
+                    blur[idx + 1] = g / count;
+                    blur[idx + 2] = b / count;
+                    blur[idx + 3] = 255;
+                }
+            }
+
+            return blurred;
+        }
+
+        // Main processing function
+        function processFrame() {
+            if (video.paused || video.ended) {
+                return;
+            }
+
+            // Draw video frame
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const sourceData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            let outputData;
+
+            if (currentFilter === 'original') {
+                outputData = sourceData;
+            } else {
+                // Detect edges for sketch/comic effects
+                const edgeData = detectEdges(sourceData);
+
+                if (currentFilter === 'sketch') {
+                    outputData = applySketchEffect(sourceData, edgeData);
+                } else if (currentFilter === 'comic') {
+                    outputData = applyComicEffect(sourceData, edgeData);
+                } else if (currentFilter === 'watercolor') {
+                    outputData = applyWatercolorEffect(sourceData);
+                }
+            }
+
+            ctx.putImageData(outputData, 0, 0);
+            animationId = requestAnimationFrame(processFrame);
+        }
+
+        // Capture photo
+        captureBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `doodle-world-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // Slider controls
+        edgeSlider.addEventListener('input', (e) => {
+            edgeIntensity = e.target.value / 100;
+            edgeValue.textContent = e.target.value + '%';
+        });
+
+        colorSlider.addEventListener('input', (e) => {
+            colorIntensity = e.target.value / 100;
+            colorValue.textContent = e.target.value + '%';
+        });
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    loadingEl.style.display = 'none';
+                    controlsEl.style.display = 'flex';
+                    processFrame();
+                });
+
+            } catch (error) {
+                console.error('Camera error:', error);
+                showError('Camera access denied. Please allow camera permissions.');
+            }
+        }
+
+        // Start
+        initCamera();
+    </script>
+</body>
+</html>

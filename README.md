@@ -1,8 +1,8 @@
 # 🥫 Can WebAR Experience
 
-A production-ready WebAR application with **three AR modes**: placement-based AR with surface tracking, barcode marker AR, and GPS location-based AR. Built with Model Viewer, A-Frame, and AR.js. No app installation required - works directly in your phone's web browser!
+A production-ready WebAR application with **four AR experiences**: placement-based AR with surface tracking, real-time doodle filters, barcode marker AR, and GPS location-based AR. Built with Model Viewer, A-Frame, and AR.js. No app installation required - works directly in your phone's web browser!
 
-## 🎯 Three AR Modes
+## 🎯 Four AR Experiences
 
 ### 🎯 **Place & Control AR** (Recommended)
 Tap to place the 3D can anywhere in your environment. Move, scale, and rotate with intuitive gestures - just like native AR apps (ARKit/ARCore). The can stays in place as you move around!
@@ -13,6 +13,16 @@ Tap to place the 3D can anywhere in your environment. Move, scale, and rotate wi
 - Drag to rotate
 - Two-finger drag to move
 - Works on iOS (ARKit) and Android (ARCore)
+
+### ✏️ **Doodle World Filter** (New!)
+Transform your camera view into hand-drawn sketches, comics, or watercolor paintings in real-time! Like Instagram/Snapchat filters but for the entire world.
+
+**Features:**
+- Multiple artistic styles: Sketch, Comic, Watercolor
+- Real-time edge detection and image processing
+- Adjustable intensity controls
+- Capture and save photos of your doodle world
+- Works on any device with a camera
 
 ### 📍 **Marker-Based AR**
 Point your camera at a barcode marker (QR code compatible) to see the 3D can in AR. Perfect for demos, exhibitions, and controlled environments.
@@ -63,8 +73,9 @@ The optimized build will be in the `dist/` folder, ready to deploy!
 
 ### Mode Selection
 1. **Open the app** on your smartphone
-2. **Choose your AR mode**:
-   - **🎯 Place & Control AR** - Tap to place (Recommended)
+2. **Choose your AR experience**:
+   - **🎯 Place & Control AR** - Tap to place objects (Recommended)
+   - **✏️ Doodle World Filter** - Hand-drawn camera filters (New!)
    - **QR Code Marker AR** - For marker-based tracking
    - **Location-Based AR** - For GPS-based AR
 
@@ -81,6 +92,19 @@ The optimized build will be in the `dist/` folder, ready to deploy!
 Works on:
 - iOS 12+ with Safari (ARKit)
 - Android 8+ with Chrome (ARCore)
+
+### ✏️ Doodle World Filter
+1. **Allow camera permissions** when prompted
+2. **Choose your style**:
+   - **Sketch** - Hand-drawn pencil effect
+   - **Comic** - Bold comic book style
+   - **Watercolor** - Soft painting effect
+3. **Adjust intensity** with the sliders:
+   - Edge slider controls line darkness
+   - Color slider controls color saturation
+4. **Tap the capture button** to save photos
+
+Perfect for creating unique artistic content!
 
 ### Marker-Based AR
 1. **Allow camera permissions** when prompted
@@ -113,6 +137,7 @@ See [MARKERS.md](./MARKERS.md) for detailed marker instructions.
 AR/
 ├── index.html              # Mode selection page
 ├── placement.html          # Place & Control AR mode (WebXR)
+├── doodle.html             # Doodle World Filter (Camera effects)
 ├── marker.html             # Barcode marker AR mode
 ├── location.html           # Location-based AR mode
 ├── doodles-can-2.glb       # Your 3D can model
@@ -127,10 +152,13 @@ AR/
 
 ### Features
 - ✅ **Placement-based AR** with surface detection (WebXR)
+- ✅ **Real-time artistic filters** - Sketch, Comic, Watercolor styles
 - ✅ **Touch gestures** for scale, rotate, and move
 - ✅ **Marker-based AR** tracking with barcode/QR support
 - ✅ **Location-based AR** with GPS positioning
+- ✅ **Edge detection** and image processing algorithms
 - ✅ 3D model loading (GLB/GLTF format)
+- ✅ Photo capture and download
 - ✅ Automatic model rotation animation
 - ✅ Mobile-optimized interface
 - ✅ Real-time camera feed
