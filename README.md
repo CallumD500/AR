@@ -1,6 +1,14 @@
 # 🥫 Can WebAR Experience
 
-A production-ready WebAR application that displays your 3D can model in augmented reality using A-Frame and AR.js. Built with Vite for optimal performance and easy deployment. No app installation required - works directly in your phone's web browser!
+A production-ready WebAR application with **dual AR modes**: barcode marker-based AR and GPS location-based AR. Built with A-Frame and AR.js, optimized with Vite. No app installation required - works directly in your phone's web browser!
+
+## 🎯 Two AR Modes
+
+### 📍 **Marker-Based AR**
+Point your camera at a barcode marker (QR code compatible) to see the 3D can in AR. Perfect for demos, exhibitions, and controlled environments.
+
+### 🌍 **Location-Based AR**
+Experience AR based on GPS coordinates. The 3D can appears at specific real-world locations. Great for outdoor exploration and scavenger hunts.
 
 ## 🚀 Quick Start
 
@@ -43,18 +51,26 @@ The optimized build will be in the `dist/` folder, ready to deploy!
 
 ## 📱 How to Use
 
-1. **Open the WebAR app** on your smartphone
-2. **Allow camera permissions** when prompted
-3. **Point your camera** at the AR marker (Hiro pattern)
-4. **Watch your 3D can appear** in augmented reality!
-5. **Move your phone around** to view the can from different angles
+### Mode Selection
+1. **Open the app** on your smartphone
+2. **Choose your AR mode**:
+   - **QR Code Marker AR** - For marker-based tracking
+   - **Location-Based AR** - For GPS-based AR
 
-## 🎯 AR Marker
+### Marker-Based AR
+1. **Allow camera permissions** when prompted
+2. **Point your camera** at a barcode marker #0
+3. **Watch your 3D can appear** in AR!
+4. **Generate markers** at: [AR.js Marker Generator](https://ar-js-org.github.io/AR.js/three.js/examples/marker-training/examples/generator.html)
 
-This WebAR experience uses the **Hiro marker pattern**. You can:
-- Print the marker from: https://ar-js-org.github.io/AR.js/data/images/hiro.png
-- Or display it on another screen
-- Or use any QR code generator to create a custom marker
+See [MARKERS.md](./MARKERS.md) for detailed marker instructions.
+
+### Location-Based AR
+1. **Allow camera and location permissions**
+2. **Go outdoors** for best GPS accuracy
+3. **Walk towards** the GPS coordinates
+4. **The can appears** when you're near the location
+5. **Update coordinates** in `location.html` for your desired locations
 
 ## 🛠️ Technical Details
 
@@ -68,14 +84,17 @@ This WebAR experience uses the **Hiro marker pattern**. You can:
 ### File Structure
 ```
 AR/
-├── index.html          # Main WebAR application
-├── doodles-can-2.glb   # Your 3D can model
-├── vite.config.js      # Vite configuration
-├── package.json        # Node dependencies and scripts
-├── vercel.json         # Vercel deployment config
-├── netlify.toml        # Netlify deployment config
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
+├── index.html              # Mode selection page
+├── marker.html             # Barcode marker AR mode
+├── location.html           # Location-based AR mode
+├── doodles-can-2.glb       # Your 3D can model
+├── vite.config.js          # Vite configuration (local dev)
+├── vite.config.github.js   # Vite configuration (GitHub Pages)
+├── package.json            # Node dependencies and scripts
+├── MARKERS.md              # Marker generation guide
+├── vercel.json             # Vercel deployment config
+├── netlify.toml            # Netlify deployment config
+└── README.md               # This file
 ```
 
 ### Features

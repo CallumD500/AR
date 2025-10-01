@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
   // Root directory
@@ -27,6 +26,11 @@ export default defineConfig({
     
     // Optimize chunks - don't try to chunk external CDN scripts
     rollupOptions: {
+      input: {
+        main: './index.html',
+        marker: './marker.html',
+        location: './location.html',
+      },
       output: {
         manualChunks: undefined, // Let Vite handle chunking automatically
         // Optimize asset file names

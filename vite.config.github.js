@@ -32,6 +32,11 @@ export default defineConfig({
     minify: 'terser',
     
     rollupOptions: {
+      input: {
+        main: './index.html',
+        marker: './marker.html',
+        location: './location.html',
+      },
       output: {
         manualChunks: undefined,
         assetFileNames: (assetInfo) => {
