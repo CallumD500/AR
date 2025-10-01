@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <meta name="description" content="Doodle World AR - Transform your world into hand-drawn sketches in real-time">
+    <meta name="description" content="Doodle World AR - Transform your world into hand-drawn cartoons with WebGL">
     <title>Doodle World Filter - AR Experience</title>
 
     <style>
@@ -34,7 +34,7 @@
             display: none;
         }
 
-        #canvas {
+        #glCanvas {
             position: absolute;
             top: 0;
             left: 0;
@@ -130,10 +130,21 @@
             gap: 8px;
             color: white;
             font-size: 0.8rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .slider-container label {
+            min-width: 60px;
         }
 
         .slider-container input[type="range"] {
-            width: 100px;
+            flex: 1;
+        }
+
+        .slider-container span {
+            min-width: 40px;
+            text-align: right;
         }
 
         .loading {
@@ -181,7 +192,7 @@
 
         .capture-btn {
             position: fixed;
-            bottom: 150px;
+            bottom: 180px;
             right: 20px;
             width: 60px;
             height: 60px;
@@ -203,8 +214,8 @@
     <!-- Instructions overlay -->
     <div id="instructions" class="instructions">
         <h2>✏️ Doodle World AR</h2>
-        <p>Transform your world into hand-drawn art!</p>
-        <p style="margin-top: 10px; font-size: 0.85em;">Choose a filter style below</p>
+        <p>Transform your world into cartoon doodles!</p>
+        <p style="margin-top: 10px; font-size: 0.85em;">Powered by WebGL shaders for real-time effects</p>
         <button class="hide-instructions" onclick="hideInstructions()">Got It</button>
     </div>
 
@@ -220,7 +231,7 @@
     <!-- Camera container -->
     <div id="container">
         <video id="video" autoplay playsinline muted></video>
-        <canvas id="canvas"></canvas>
+        <canvas id="glCanvas"></canvas>
     </div>
 
     <!-- Capture button -->
@@ -229,161 +240,402 @@
     <!-- Controls -->
     <div id="controls" class="controls">
         <div class="control-row">
-            <button id="original-btn" class="control-btn active" onclick="setFilter('original')">Original</button>
+            <button id="cartoon-btn" class="control-btn active" onclick="setFilter('cartoon')">Cartoon</button>
             <button id="sketch-btn" class="control-btn" onclick="setFilter('sketch')">Sketch</button>
-            <button id="edge-btn" class="control-btn" onclick="setFilter('edge')">Edge</button>
-            <button id="invert-btn" class="control-btn" onclick="setFilter('invert')">Invert</button>
+            <button id="comic-btn" class="control-btn" onclick="setFilter('comic')">Comic</button>
+            <button id="original-btn" class="control-btn" onclick="setFilter('original')">Original</button>
         </div>
         <div class="slider-container">
-            <label for="intensity-slider">Intensity:</label>
-            <input type="range" id="intensity-slider" min="0" max="100" value="80">
-            <span id="intensity-value">80%</span>
+            <label for="edge-slider">Edges:</label>
+            <input type="range" id="edge-slider" min="0" max="100" value="75">
+            <span id="edge-value">75%</span>
+        </div>
+        <div class="slider-container">
+            <label for="color-slider">Colors:</label>
+            <input type="range" id="color-slider" min="2" max="16" value="6">
+            <span id="color-value">6</span>
+        </div>
+        <div class="slider-container">
+            <label for="line-slider">Lines:</label>
+            <input type="range" id="line-slider" min="1" max="10" value="3">
+            <span id="line-value">3px</span>
         </div>
     </div>
 
+    <!-- Vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        attribute vec2 a_texCoord;
+        varying vec2 v_texCoord;
+
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+            v_texCoord = a_texCoord;
+        }
+    </script>
+
+    <!-- Fragment Shader - Cartoon Effect -->
+    <script id="cartoon-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D u_texture;
+        uniform vec2 u_resolution;
+        uniform float u_edgeThreshold;
+        uniform float u_colorLevels;
+        uniform float u_lineWidth;
+        varying vec2 v_texCoord;
+
+        // Sobel edge detection
+        float edgeDetect() {
+            vec2 texel = 1.0 / u_resolution;
+            float lineW = u_lineWidth;
+
+            // Sobel kernels
+            mat3 Gx = mat3(
+                -1.0, 0.0, 1.0,
+                -2.0, 0.0, 2.0,
+                -1.0, 0.0, 1.0
+            );
+            mat3 Gy = mat3(
+                -1.0, -2.0, -1.0,
+                 0.0,  0.0,  0.0,
+                 1.0,  2.0,  1.0
+            );
+
+            float gradX = 0.0;
+            float gradY = 0.0;
+
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    vec2 offset = vec2(float(i), float(j)) * texel * lineW;
+                    vec3 color = texture2D(u_texture, v_texCoord + offset).rgb;
+                    float gray = dot(color, vec3(0.299, 0.587, 0.114));
+
+                    gradX += gray * Gx[i+1][j+1];
+                    gradY += gray * Gy[i+1][j+1];
+                }
+            }
+
+            float edge = length(vec2(gradX, gradY));
+            return edge;
+        }
+
+        // Color quantization (posterization)
+        vec3 quantizeColor(vec3 color, float levels) {
+            return floor(color * levels) / levels;
+        }
+
+        void main() {
+            vec3 color = texture2D(u_texture, v_texCoord).rgb;
+
+            // Quantize colors for cartoon effect
+            vec3 quantized = quantizeColor(color, u_colorLevels);
+
+            // Detect edges
+            float edge = edgeDetect();
+            float edgeMask = smoothstep(u_edgeThreshold - 0.1, u_edgeThreshold, edge);
+
+            // Mix quantized color with black edges
+            vec3 result = mix(quantized, vec3(0.0), edgeMask);
+
+            gl_FragColor = vec4(result, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader - Sketch Effect -->
+    <script id="sketch-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D u_texture;
+        uniform vec2 u_resolution;
+        uniform float u_edgeThreshold;
+        uniform float u_lineWidth;
+        varying vec2 v_texCoord;
+
+        float edgeDetect() {
+            vec2 texel = 1.0 / u_resolution;
+            float lineW = u_lineWidth;
+
+            mat3 Gx = mat3(-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0);
+            mat3 Gy = mat3(-1.0, -2.0, -1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 1.0);
+
+            float gradX = 0.0;
+            float gradY = 0.0;
+
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    vec2 offset = vec2(float(i), float(j)) * texel * lineW;
+                    vec3 color = texture2D(u_texture, v_texCoord + offset).rgb;
+                    float gray = dot(color, vec3(0.299, 0.587, 0.114));
+
+                    gradX += gray * Gx[i+1][j+1];
+                    gradY += gray * Gy[i+1][j+1];
+                }
+            }
+
+            return length(vec2(gradX, gradY));
+        }
+
+        void main() {
+            float edge = edgeDetect();
+            float line = 1.0 - smoothstep(u_edgeThreshold - 0.1, u_edgeThreshold, edge);
+
+            // Paper texture simulation
+            float noise = fract(sin(dot(v_texCoord * 1000.0, vec2(12.9898, 78.233))) * 43758.5453);
+            vec3 paper = vec3(0.95 + noise * 0.05);
+
+            vec3 result = mix(vec3(0.0), paper, line);
+            gl_FragColor = vec4(result, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader - Comic Effect -->
+    <script id="comic-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D u_texture;
+        uniform vec2 u_resolution;
+        uniform float u_edgeThreshold;
+        uniform float u_colorLevels;
+        uniform float u_lineWidth;
+        varying vec2 v_texCoord;
+
+        float edgeDetect() {
+            vec2 texel = 1.0 / u_resolution;
+            float lineW = u_lineWidth;
+
+            mat3 Gx = mat3(-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0);
+            mat3 Gy = mat3(-1.0, -2.0, -1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 1.0);
+
+            float gradX = 0.0;
+            float gradY = 0.0;
+
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    vec2 offset = vec2(float(i), float(j)) * texel * lineW;
+                    vec3 color = texture2D(u_texture, v_texCoord + offset).rgb;
+                    float gray = dot(color, vec3(0.299, 0.587, 0.114));
+
+                    gradX += gray * Gx[i+1][j+1];
+                    gradY += gray * Gy[i+1][j+1];
+                }
+            }
+
+            return length(vec2(gradX, gradY));
+        }
+
+        vec3 quantizeColor(vec3 color, float levels) {
+            return floor(color * levels + 0.5) / levels;
+        }
+
+        // Halftone effect
+        float halftone(vec2 coord, float brightness) {
+            vec2 gridCoord = fract(coord * 50.0);
+            float dist = distance(gridCoord, vec2(0.5));
+            return step(dist, brightness * 0.5);
+        }
+
+        void main() {
+            vec3 color = texture2D(u_texture, v_texCoord).rgb;
+
+            // Strong posterization
+            vec3 quantized = quantizeColor(color, u_colorLevels);
+
+            // Boost saturation and contrast
+            quantized = pow(quantized, vec3(0.8));
+
+            // Edge detection
+            float edge = edgeDetect();
+            float edgeMask = smoothstep(u_edgeThreshold - 0.05, u_edgeThreshold, edge);
+
+            // Add halftone in shadows
+            float brightness = dot(quantized, vec3(0.333));
+            float halftoneEffect = halftone(v_texCoord, brightness);
+            quantized = mix(quantized, quantized * 0.7, (1.0 - halftoneEffect) * 0.3);
+
+            // Strong black edges
+            vec3 result = mix(quantized, vec3(0.0), edgeMask);
+
+            gl_FragColor = vec4(result, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader - Original (passthrough) -->
+    <script id="original-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D u_texture;
+        varying vec2 v_texCoord;
+
+        void main() {
+            gl_FragColor = texture2D(u_texture, v_texCoord);
+        }
+    </script>
+
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const canvas = document.getElementById('glCanvas');
         const loadingEl = document.getElementById('loading');
         const loadingText = document.getElementById('loading-text');
         const instructionsEl = document.getElementById('instructions');
         const errorEl = document.getElementById('error');
         const controlsEl = document.getElementById('controls');
         const captureBtn = document.getElementById('capture-btn');
-        const intensitySlider = document.getElementById('intensity-slider');
-        const intensityValue = document.getElementById('intensity-value');
 
-        let currentFilter = 'original';
-        let intensity = 0.8;
+        let gl, program, currentShader = 'cartoon';
+        let texture, positionBuffer, texCoordBuffer;
         let isRunning = false;
+        let edgeThreshold = 0.25;
+        let colorLevels = 6.0;
+        let lineWidth = 3.0;
 
         function hideInstructions() {
             instructionsEl.style.display = 'none';
         }
 
         function showError(message) {
-            errorEl.innerHTML = `<p>${message}</p><p style="margin-top:10px; font-size:0.9em;">Please reload the page and allow camera access.</p>`;
+            errorEl.innerHTML = `<p>${message}</p><p style="margin-top:10px; font-size:0.9em;">Please reload and allow camera access.</p>`;
             errorEl.style.display = 'block';
             loadingEl.style.display = 'none';
         }
 
         function setFilter(filter) {
-            currentFilter = filter;
+            currentShader = filter;
             document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`${filter}-btn`).classList.add('active');
+            initShaderProgram();
         }
 
-        // Simple edge detection using difference
-        function detectEdges(imageData) {
-            const data = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-            const output = new Uint8ClampedArray(data.length);
+        // Initialize WebGL
+        function initWebGL() {
+            gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) {
+                showError('WebGL not supported');
+                return false;
+            }
+            return true;
+        }
 
-            for (let y = 1; y < height - 1; y++) {
-                for (let x = 1; x < width - 1; x++) {
-                    const idx = (y * width + x) * 4;
+        // Compile shader
+        function compileShader(source, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
 
-                    // Get grayscale value
-                    const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
 
-                    // Compare with neighbors
-                    const rightIdx = (y * width + (x + 1)) * 4;
-                    const downIdx = ((y + 1) * width + x) * 4;
+        // Initialize shader program
+        function initShaderProgram() {
+            const vertexSource = document.getElementById('vertex-shader').textContent;
+            const fragmentShaderId = currentShader + '-shader';
+            const fragmentSource = document.getElementById(fragmentShaderId).textContent;
 
-                    const rightGray = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
-                    const downGray = (data[downIdx] + data[downIdx + 1] + data[downIdx + 2]) / 3;
+            const vertexShader = compileShader(vertexSource, gl.VERTEX_SHADER);
+            const fragmentShader = compileShader(fragmentSource, gl.FRAGMENT_SHADER);
 
-                    const dx = Math.abs(gray - rightGray);
-                    const dy = Math.abs(gray - downGray);
-                    const edge = Math.min(255, (dx + dy) * 2);
-
-                    const edgeVal = 255 - edge;
-                    output[idx] = edgeVal;
-                    output[idx + 1] = edgeVal;
-                    output[idx + 2] = edgeVal;
-                    output[idx + 3] = 255;
-                }
+            if (program) {
+                gl.deleteProgram(program);
             }
 
-            return new ImageData(output, width, height);
-        }
+            program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
 
-        // Apply grayscale
-        function grayscale(imageData) {
-            const data = imageData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                data[i] = avg;
-                data[i + 1] = avg;
-                data[i + 2] = avg;
-            }
-            return imageData;
-        }
-
-        // Apply invert
-        function invert(imageData) {
-            const data = imageData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                data[i] = 255 - data[i];
-                data[i + 1] = 255 - data[i + 1];
-                data[i + 2] = 255 - data[i + 2];
-            }
-            return imageData;
-        }
-
-        // Apply sketch effect
-        function sketch(imageData, edgeData) {
-            const src = imageData.data;
-            const edge = edgeData.data;
-            const output = new Uint8ClampedArray(src.length);
-
-            for (let i = 0; i < src.length; i += 4) {
-                const blend = intensity;
-                output[i] = src[i] * (1 - blend) + edge[i] * blend;
-                output[i + 1] = src[i + 1] * (1 - blend) + edge[i + 1] * blend;
-                output[i + 2] = src[i + 2] * (1 - blend) + edge[i + 2] * blend;
-                output[i + 3] = 255;
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+                return;
             }
 
-            return new ImageData(output, imageData.width, imageData.height);
+            gl.useProgram(program);
+
+            // Setup attributes
+            const positionLocation = gl.getAttribLocation(program, 'a_position');
+            const texCoordLocation = gl.getAttribLocation(program, 'a_texCoord');
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+            gl.enableVertexAttribArray(texCoordLocation);
+            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
         }
 
-        // Main processing loop
-        function processFrame() {
+        // Setup buffers
+        function setupBuffers() {
+            // Position buffer
+            positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                -1, -1,
+                 1, -1,
+                -1,  1,
+                 1,  1,
+            ]), gl.STATIC_DRAW);
+
+            // Texture coordinate buffer
+            texCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                0, 1,
+                1, 1,
+                0, 0,
+                1, 0,
+            ]), gl.STATIC_DRAW);
+
+            // Create texture
+            texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        }
+
+        // Render loop
+        function render() {
             if (!isRunning || video.paused || video.ended) {
                 if (isRunning) {
-                    requestAnimationFrame(processFrame);
+                    requestAnimationFrame(render);
                 }
                 return;
             }
 
-            try {
-                // Draw current video frame to canvas
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Upload video frame to texture
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
 
-                // Get image data
-                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-                // Apply filter
-                if (currentFilter === 'sketch') {
-                    const edges = detectEdges(imageData);
-                    imageData = sketch(imageData, edges);
-                } else if (currentFilter === 'edge') {
-                    imageData = detectEdges(imageData);
-                } else if (currentFilter === 'invert') {
-                    imageData = invert(imageData);
-                }
-
-                // Put processed image back
-                ctx.putImageData(imageData, 0, 0);
-
-            } catch (err) {
-                console.error('Processing error:', err);
+            // Set uniforms
+            const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+            if (resolutionLocation) {
+                gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
             }
 
-            requestAnimationFrame(processFrame);
+            const edgeLocation = gl.getUniformLocation(program, 'u_edgeThreshold');
+            if (edgeLocation) {
+                gl.uniform1f(edgeLocation, edgeThreshold);
+            }
+
+            const colorLocation = gl.getUniformLocation(program, 'u_colorLevels');
+            if (colorLocation) {
+                gl.uniform1f(colorLocation, colorLevels);
+            }
+
+            const lineLocation = gl.getUniformLocation(program, 'u_lineWidth');
+            if (lineLocation) {
+                gl.uniform1f(lineLocation, lineWidth);
+            }
+
+            // Draw
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            requestAnimationFrame(render);
         }
 
         // Capture photo
@@ -394,10 +646,20 @@
             link.click();
         });
 
-        // Intensity slider
-        intensitySlider.addEventListener('input', (e) => {
-            intensity = e.target.value / 100;
-            intensityValue.textContent = e.target.value + '%';
+        // Sliders
+        document.getElementById('edge-slider').addEventListener('input', (e) => {
+            edgeThreshold = 1.0 - (e.target.value / 100);
+            document.getElementById('edge-value').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('color-slider').addEventListener('input', (e) => {
+            colorLevels = parseFloat(e.target.value);
+            document.getElementById('color-value').textContent = e.target.value;
+        });
+
+        document.getElementById('line-slider').addEventListener('input', (e) => {
+            lineWidth = parseFloat(e.target.value);
+            document.getElementById('line-value').textContent = e.target.value + 'px';
         });
 
         // Initialize camera
@@ -405,77 +667,63 @@
             try {
                 loadingText.textContent = 'Requesting camera access...';
 
-                const constraints = {
+                const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'environment',
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
                     }
-                };
+                });
 
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-
                 loadingText.textContent = 'Loading camera...';
 
-                // Wait for video to be ready
                 video.onloadedmetadata = () => {
                     video.play().then(() => {
-                        // Set canvas size to match video
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
 
                         console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
 
-                        // Hide loading, show controls
+                        if (!initWebGL()) return;
+                        setupBuffers();
+                        initShaderProgram();
+
                         loadingEl.style.display = 'none';
                         controlsEl.style.display = 'flex';
                         captureBtn.style.display = 'block';
 
-                        // Start processing
                         isRunning = true;
-                        processFrame();
+                        render();
 
-                        console.log('Doodle filter started successfully');
+                        console.log('WebGL doodle filter started');
                     }).catch(err => {
-                        showError('Failed to start video playback');
+                        showError('Failed to start video');
                         console.error('Play error:', err);
                     });
-                };
-
-                video.onerror = (err) => {
-                    showError('Video error occurred');
-                    console.error('Video error:', err);
                 };
 
             } catch (error) {
                 console.error('Camera error:', error);
                 if (error.name === 'NotAllowedError') {
                     showError('Camera access denied');
-                } else if (error.name === 'NotFoundError') {
-                    showError('No camera found');
                 } else {
                     showError('Failed to access camera: ' + error.message);
                 }
             }
         }
 
-        // Check browser support
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        // Start
+        if (!navigator.mediaDevices) {
             showError('Your browser does not support camera access');
         } else {
-            // Start camera when page loads
             initCamera();
         }
 
         // Handle page visibility
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                isRunning = false;
-            } else {
-                isRunning = true;
-                processFrame();
-            }
+            isRunning = !document.hidden;
+            if (isRunning) render();
         });
     </script>
 </body>
