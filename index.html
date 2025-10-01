@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <meta name="description" content="Choose your AR experience - QR Code Marker or Location-Based AR">
-    <title>AR Experience - Choose Mode</title>
+    <meta name="description" content="Choose your AR experience - Professional WebAR platform">
+    <title>AR Experience Platform</title>
 
     <style>
         * {
@@ -18,157 +18,325 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+            animation: gradient-shift 15s ease infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-10px, -10px) rotate(5deg); }
         }
 
         .container {
-            max-width: 500px;
+            max-width: 1200px;
             width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 2rem;
+            color: #ffffff;
+            font-size: 2.5rem;
             font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            font-weight: 400;
         }
 
         .mode-selector {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .mode-card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             text-decoration: none;
             color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mode-card:hover::before {
+            transform: scaleX(1);
         }
 
         .mode-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .mode-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .mode-card.disabled::after {
+            content: 'Coming Soon';
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
 
         .mode-card h2 {
-            color: #667eea;
-            margin-bottom: 12px;
+            color: #ffffff;
             font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.01em;
         }
 
         .mode-card p {
-            color: #666;
+            color: rgba(255, 255, 255, 0.8);
             line-height: 1.6;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
         }
 
-        .mode-card .features {
+        .features {
             list-style: none;
-            margin-top: 15px;
+            margin: 0;
+            padding: 0;
         }
 
-        .mode-card .features li {
-            color: #888;
+        .features li {
+            color: rgba(255, 255, 255, 0.7);
             font-size: 0.9rem;
-            padding: 5px 0;
-            padding-left: 20px;
+            padding: 8px 0;
+            padding-left: 24px;
             position: relative;
+            line-height: 1.4;
         }
 
-        .mode-card .features li:before {
-            content: "✓";
+        .features li:before {
+            content: "";
             position: absolute;
             left: 0;
-            color: #667eea;
-            font-weight: bold;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
         }
 
         .badge {
-            display: inline-block;
-            background: #667eea;
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-top: 10px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        @media (max-width: 600px) {
+        .badge.new {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
             h1 {
-                font-size: 1.5rem;
-                margin-bottom: 30px;
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
             }
 
             .mode-card {
-                padding: 20px;
+                padding: 24px;
             }
 
             .mode-card h2 {
                 font-size: 1.25rem;
             }
+
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass card hover effect */
+        @media (hover: hover) {
+            .mode-card:hover {
+                background: rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        /* Loading animation for cards */
+        .mode-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .mode-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .mode-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .mode-card:nth-child(4) {
+            animation-delay: 0.4s;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Choose Your AR Experience</h1>
+        <div class="header">
+            <h1>AR Experience Platform</h1>
+            <p class="subtitle">Choose your augmented reality experience</p>
+        </div>
 
         <div class="mode-selector">
             <a href="./placement.html" class="mode-card">
-                <h2>🎯 Place & Control AR</h2>
-                <p>Tap to place the can anywhere in your environment. Move, scale, and rotate with touch gestures.</p>
+                <div class="card-header">
+                    <h2>Place & Control</h2>
+                    <span class="badge">Recommended</span>
+                </div>
+                <p>Tap to place objects in your environment with full gesture control. Move, scale, and rotate with intuitive touch interactions.</p>
                 <ul class="features">
-                    <li>Tap to place on any surface</li>
+                    <li>Surface detection and placement</li>
                     <li>Pinch to scale, drag to rotate</li>
-                    <li>Like ARKit/ARCore apps</li>
+                    <li>World tracking technology</li>
                 </ul>
-                <span class="badge">Recommended</span>
             </a>
 
             <a href="./doodle.html" class="mode-card">
-                <h2>✏️ Doodle World Filter</h2>
-                <p>Transform your camera view into hand-drawn sketches and doodles in real-time!</p>
+                <div class="card-header">
+                    <h2>Doodle World Filter</h2>
+                    <span class="badge new">New</span>
+                </div>
+                <p>Transform your camera view into hand-drawn art with real-time GPU-accelerated cartoon effects.</p>
                 <ul class="features">
-                    <li>Sketch, comic, and watercolor styles</li>
-                    <li>Adjustable edge and color intensity</li>
-                    <li>Capture photos of your doodle world</li>
+                    <li>WebGL-powered shader effects</li>
+                    <li>Cartoon, sketch, and comic styles</li>
+                    <li>Real-time 60 FPS processing</li>
                 </ul>
-                <span class="badge">New!</span>
             </a>
 
-            <a href="./marker.html" class="mode-card">
-                <h2>QR Code Marker AR</h2>
-                <p>Point your camera at a QR code marker to see the 3D can appear in augmented reality.</p>
+            <a class="mode-card disabled">
+                <div class="card-header">
+                    <h2>Marker Tracking</h2>
+                </div>
+                <p>Point your camera at barcode markers to trigger AR content with precise tracking capabilities.</p>
                 <ul class="features">
-                    <li>Works with barcode markers</li>
-                    <li>Precise tracking and positioning</li>
-                    <li>Best for controlled environments</li>
+                    <li>QR code compatible markers</li>
+                    <li>Precise 6DOF tracking</li>
+                    <li>Perfect for exhibitions</li>
                 </ul>
-                <span class="badge">Marker-Based</span>
             </a>
 
-            <a href="./location.html" class="mode-card">
-                <h2>Location-Based AR</h2>
-                <p>Experience AR based on your GPS location. The 3D can appears at specific geographic coordinates.</p>
+            <a class="mode-card disabled">
+                <div class="card-header">
+                    <h2>Location-Based</h2>
+                </div>
+                <p>Experience AR content anchored to real-world GPS coordinates. Explore digital objects in physical locations.</p>
                 <ul class="features">
-                    <li>GPS-based positioning</li>
-                    <li>Explore AR in the real world</li>
-                    <li>Requires location permissions</li>
+                    <li>GPS coordinate anchoring</li>
+                    <li>Real-world exploration</li>
+                    <li>Outdoor AR experiences</li>
                 </ul>
-                <span class="badge">GPS-Based</span>
             </a>
         </div>
     </div>

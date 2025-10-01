@@ -196,16 +196,16 @@
 <body>
     <!-- Instructions overlay -->
     <div id="instructions" class="instructions">
-        <h2>🎯 Place & Control AR</h2>
-        <p><strong>Tap to place the can in your world!</strong></p>
+        <h2>Place & Control AR</h2>
+        <p><strong>Tap to place the can in your world</strong></p>
         <ul>
-            <li>📱 <strong>Tap "View in AR"</strong> to start</li>
-            <li>👆 <strong>Tap on a surface</strong> to place the can</li>
-            <li>🔄 <strong>Pinch</strong> to scale</li>
-            <li>↔️ <strong>Drag</strong> to rotate</li>
-            <li>👉 <strong>Drag with 2 fingers</strong> to move</li>
+            <li><strong>Tap "View in AR"</strong> to start</li>
+            <li><strong>Tap on a surface</strong> to place the can</li>
+            <li><strong>Pinch</strong> to scale</li>
+            <li><strong>Drag</strong> to rotate</li>
+            <li><strong>Drag with 2 fingers</strong> to move</li>
         </ul>
-        <p style="font-size: 0.85em; margin-top: 10px;">💡 Works on iOS (ARKit) and Android (ARCore)</p>
+        <p style="font-size: 0.85em; margin-top: 10px;">Works on iOS (ARKit) and Android (ARCore)</p>
         <button class="hide-instructions" onclick="hideInstructions()">Got It</button>
     </div>
 
@@ -248,7 +248,7 @@
     >
         <!-- AR Button (custom) -->
         <button slot="ar-button" id="ar-button" class="ar-button">
-            📱 View in AR
+            View in AR
         </button>
 
         <!-- Fallback content -->
@@ -310,7 +310,7 @@
             console.log('AR is supported on this device');
         } else {
             console.log('AR not supported - 3D preview mode only');
-            arButton.textContent = '🔄 View 3D Model';
+            arButton.textContent = 'View 3D Model';
             arButton.style.background = '#666';
         }
 

@@ -182,11 +182,11 @@
 <body>
     <!-- Instructions overlay -->
     <div id="instructions" class="instructions">
-        <h2>🥫 Barcode Marker AR</h2>
+        <h2>Barcode Marker AR</h2>
         <p>1. Allow camera permissions when prompted</p>
         <p>2. Point at a <strong>barcode marker #0</strong></p>
-        <p>3. 3D can will appear in AR!</p>
-        <p style="font-size: 0.85em; margin-top: 10px;">💡 Generate marker at <a href="https://ar-js-org.github.io/AR.js/three.js/examples/marker-training/examples/generator.html" target="_blank" style="color: #4a9eff;">AR.js Marker Generator</a></p>
+        <p>3. 3D can will appear in AR</p>
+        <p style="font-size: 0.85em; margin-top: 10px;">Generate marker at <a href="https://ar-js-org.github.io/AR.js/three.js/examples/marker-training/examples/generator.html" target="_blank" style="color: #4a9eff;">AR.js Marker Generator</a></p>
         <button class="hide-instructions" onclick="hideInstructions()">Got It</button>
     </div>
     
@@ -362,14 +362,14 @@
         if (markerEl) {
             markerEl.addEventListener('markerFound', function() {
                 markerVisible = true;
-                console.log('🎯 Marker detected - Can visible!');
+                console.log('Marker detected - Can visible');
                 updateStatus('AR Active', true);
                 hideInstructions();
             });
 
             markerEl.addEventListener('markerLost', function() {
                 markerVisible = false;
-                console.log('👁️ Marker lost');
+                console.log('Marker lost');
                 updateStatus('Searching for marker...', false);
             });
         }
