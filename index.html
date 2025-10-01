@@ -26,7 +26,8 @@
             justify-content: center;
             padding: 20px;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Animated background elements */
@@ -52,11 +53,14 @@
             width: 100%;
             position: relative;
             z-index: 1;
+            margin: auto;
+            padding-bottom: 60px;
         }
 
         .header {
             text-align: center;
             margin-bottom: 48px;
+            margin-top: 60px;
             animation: fadeInDown 0.6s ease-out;
         }
 
@@ -235,6 +239,21 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                padding: 0;
+            }
+
+            .container {
+                padding: 20px;
+                padding-bottom: 80px;
+            }
+
+            .header {
+                margin-top: 40px;
+                margin-bottom: 32px;
+            }
+
             h1 {
                 font-size: 2rem;
             }
@@ -291,51 +310,51 @@
         <div class="mode-selector">
             <a href="./placement.html" class="mode-card">
                 <div class="card-header">
-                    <h2>Place & Control</h2>
+                    <h2>Interactive Product View</h2>
                     <span class="badge">Recommended</span>
                 </div>
-                <p>Tap to place objects in your environment with full gesture control. Move, scale, and rotate with intuitive touch interactions.</p>
+                <p>Place our product can in your physical space and interact with it in real-time. See how it looks on your desk, table, or any surface before purchase.</p>
                 <ul class="features">
-                    <li>Surface detection and placement</li>
-                    <li>Pinch to scale, drag to rotate</li>
-                    <li>World tracking technology</li>
+                    <li>Photorealistic can rendering in your environment</li>
+                    <li>True-to-scale product visualization</li>
+                    <li>360° rotation and inspection capabilities</li>
                 </ul>
             </a>
 
             <a href="./doodle.html" class="mode-card">
                 <div class="card-header">
-                    <h2>Doodle World Filter</h2>
+                    <h2>Artistic Brand Filter</h2>
                     <span class="badge new">New</span>
                 </div>
-                <p>Transform your camera view into hand-drawn art with real-time GPU-accelerated cartoon effects.</p>
+                <p>Experience our brand through a creative lens. Transform your environment into hand-drawn art - perfect for social media content and shareable moments.</p>
                 <ul class="features">
-                    <li>WebGL-powered shader effects</li>
-                    <li>Cartoon, sketch, and comic styles</li>
-                    <li>Real-time 60 FPS processing</li>
+                    <li>Multiple artistic styles: cartoon, sketch, comic</li>
+                    <li>Create unique brand-aligned social content</li>
+                    <li>Capture and share filtered product photography</li>
                 </ul>
             </a>
 
             <a class="mode-card disabled">
                 <div class="card-header">
-                    <h2>Marker Tracking</h2>
+                    <h2>Scan & Discover</h2>
                 </div>
-                <p>Point your camera at barcode markers to trigger AR content with precise tracking capabilities.</p>
+                <p>Scan QR codes on product packaging to unlock exclusive AR experiences. View nutritional information, brand stories, and interactive 3D content.</p>
                 <ul class="features">
-                    <li>QR code compatible markers</li>
-                    <li>Precise 6DOF tracking</li>
-                    <li>Perfect for exhibitions</li>
+                    <li>Scan product packaging for instant AR activation</li>
+                    <li>Access product details and specifications</li>
+                    <li>Unlock brand experiences and promotions</li>
                 </ul>
             </a>
 
             <a class="mode-card disabled">
                 <div class="card-header">
-                    <h2>Location-Based</h2>
+                    <h2>Find In Store</h2>
                 </div>
-                <p>Experience AR content anchored to real-world GPS coordinates. Explore digital objects in physical locations.</p>
+                <p>Discover our products at nearby retail locations. Navigate to in-store displays with AR wayfinding and see product availability in real-time.</p>
                 <ul class="features">
-                    <li>GPS coordinate anchoring</li>
-                    <li>Real-world exploration</li>
-                    <li>Outdoor AR experiences</li>
+                    <li>Locate products at nearby stores via GPS</li>
+                    <li>AR navigation to product displays in-store</li>
+                    <li>Real-time stock availability and pricing</li>
                 </ul>
             </a>
         </div>
