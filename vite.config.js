@@ -28,6 +28,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './index.html',
+        placement: './placement.html',
         marker: './marker.html',
         location: './location.html',
       },

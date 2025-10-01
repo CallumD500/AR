@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Place AR - Tap to place the 3D can in your environment with full control">
+    <title>Placement AR - Can Experience</title>
+
+    <!-- Model Viewer for WebAR placement -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        model-viewer {
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.3rem;
+        }
+
+        .instructions p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+        }
+
+        .instructions ul {
+            text-align: left;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .hide-instructions {
+            margin-top: 15px;
+            padding: 10px 24px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            z-index: 999;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .control-btn:active {
+            background: #3a8eef;
+        }
+
+        .ar-button {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.05);
+            }
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 16px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: #4a9eff;
+            width: 0%;
+            transition: width 0.3s;
+            z-index: 1002;
+        }
+
+        /* AR mode specific styles */
+        .ar-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: none;
+            z-index: 1003;
+        }
+    </style>
+</head>
+<body>
+    <!-- Instructions overlay -->
+    <div id="instructions" class="instructions">
+        <h2>🎯 Place & Control AR</h2>
+        <p><strong>Tap to place the can in your world!</strong></p>
+        <ul>
+            <li>📱 <strong>Tap "View in AR"</strong> to start</li>
+            <li>👆 <strong>Tap on a surface</strong> to place the can</li>
+            <li>🔄 <strong>Pinch</strong> to scale</li>
+            <li>↔️ <strong>Drag</strong> to rotate</li>
+            <li>👉 <strong>Drag with 2 fingers</strong> to move</li>
+        </ul>
+        <p style="font-size: 0.85em; margin-top: 10px;">💡 Works on iOS (ARKit) and Android (ARCore)</p>
+        <button class="hide-instructions" onclick="hideInstructions()">Got It</button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <p id="loading-text">Loading 3D model...</p>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="progress-bar" class="progress-bar"></div>
+
+    <!-- AR Prompt -->
+    <div id="ar-prompt" class="ar-prompt">
+        Tap on a surface to place your can
+    </div>
+
+    <!-- Model Viewer with AR capabilities -->
+    <model-viewer
+        id="can-viewer"
+        src="./doodles-can-2.glb"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        camera-controls
+        touch-action="pan-y"
+        shadow-intensity="1"
+        exposure="1"
+        shadow-softness="0.5"
+        camera-orbit="45deg 75deg 2.5m"
+        min-camera-orbit="auto auto 1m"
+        max-camera-orbit="auto auto 10m"
+        interpolation-decay="100"
+        camera-target="0m 0.5m 0m"
+        auto-rotate
+        auto-rotate-delay="3000"
+        rotation-per-second="30deg"
+    >
+        <!-- AR Button (custom) -->
+        <button slot="ar-button" id="ar-button" class="ar-button">
+            📱 View in AR
+        </button>
+
+        <!-- Fallback content -->
+        <div slot="progress-bar" style="display: none;">
+            <div class="progress-bar"></div>
+        </div>
+    </model-viewer>
+
+    <script>
+        const modelViewer = document.querySelector('#can-viewer');
+        const loadingEl = document.getElementById('loading');
+        const loadingText = document.getElementById('loading-text');
+        const instructionsEl = document.getElementById('instructions');
+        const progressBar = document.getElementById('progress-bar');
+        const arPrompt = document.getElementById('ar-prompt');
+        const arButton = document.getElementById('ar-button');
+
+        function hideInstructions() {
+            instructionsEl.style.display = 'none';
+        }
+
+        // Loading progress
+        modelViewer.addEventListener('progress', (event) => {
+            const progress = event.detail.totalProgress * 100;
+            progressBar.style.width = progress + '%';
+            loadingText.textContent = `Loading... ${Math.round(progress)}%`;
+        });
+
+        // Model loaded
+        modelViewer.addEventListener('load', () => {
+            loadingEl.style.display = 'none';
+            progressBar.style.display = 'none';
+            console.log('3D model loaded successfully');
+        });
+
+        // Model error
+        modelViewer.addEventListener('error', (event) => {
+            loadingText.textContent = 'Failed to load 3D model';
+            loadingText.style.color = '#ff4444';
+            console.error('Model loading error:', event);
+        });
+
+        // AR session events
+        modelViewer.addEventListener('ar-status', (event) => {
+            if (event.detail.status === 'session-started') {
+                arPrompt.style.display = 'block';
+                console.log('AR session started');
+            } else if (event.detail.status === 'object-placed') {
+                arPrompt.textContent = 'Pinch to scale, drag to rotate!';
+                console.log('Object placed in AR');
+            } else if (event.detail.status === 'failed') {
+                alert('AR not supported on this device');
+                console.error('AR failed:', event.detail.error);
+            }
+        });
+
+        // Check AR support
+        if (modelViewer.canActivateAR) {
+            console.log('AR is supported on this device');
+        } else {
+            console.log('AR not supported - 3D preview mode only');
+            arButton.textContent = '🔄 View 3D Model';
+            arButton.style.background = '#666';
+        }
+
+        // Camera orbit tracking
+        let isUserInteracting = false;
+        modelViewer.addEventListener('camera-change', () => {
+            isUserInteracting = true;
+            // Stop auto-rotate when user interacts
+            if (modelViewer.autoRotate) {
+                modelViewer.autoRotate = false;
+            }
+        });
+
+        // Reset auto-rotate after 5 seconds of inactivity
+        let resetTimeout;
+        modelViewer.addEventListener('camera-change', () => {
+            clearTimeout(resetTimeout);
+            resetTimeout = setTimeout(() => {
+                if (!modelViewer.autoRotate) {
+                    modelViewer.autoRotate = true;
+                }
+            }, 5000);
+        });
+
+        // Log when AR is activated
+        arButton.addEventListener('click', () => {
+            console.log('AR button clicked');
+        });
+
+        // Performance monitoring
+        console.log('Placement AR initialized');
+        console.log('Supported AR modes:', modelViewer.getAttribute('ar-modes'));
+    </script>
+</body>
+</html>

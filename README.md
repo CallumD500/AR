@@ -1,8 +1,18 @@
 # 🥫 Can WebAR Experience
 
-A production-ready WebAR application with **dual AR modes**: barcode marker-based AR and GPS location-based AR. Built with A-Frame and AR.js, optimized with Vite. No app installation required - works directly in your phone's web browser!
+A production-ready WebAR application with **three AR modes**: placement-based AR with surface tracking, barcode marker AR, and GPS location-based AR. Built with Model Viewer, A-Frame, and AR.js. No app installation required - works directly in your phone's web browser!
 
-## 🎯 Two AR Modes
+## 🎯 Three AR Modes
+
+### 🎯 **Place & Control AR** (Recommended)
+Tap to place the 3D can anywhere in your environment. Move, scale, and rotate with intuitive gestures - just like native AR apps (ARKit/ARCore). The can stays in place as you move around!
+
+**Features:**
+- Tap to place on detected surfaces (floors, tables, walls)
+- Pinch to scale
+- Drag to rotate
+- Two-finger drag to move
+- Works on iOS (ARKit) and Android (ARCore)
 
 ### 📍 **Marker-Based AR**
 Point your camera at a barcode marker (QR code compatible) to see the 3D can in AR. Perfect for demos, exhibitions, and controlled environments.
@@ -54,8 +64,23 @@ The optimized build will be in the `dist/` folder, ready to deploy!
 ### Mode Selection
 1. **Open the app** on your smartphone
 2. **Choose your AR mode**:
+   - **🎯 Place & Control AR** - Tap to place (Recommended)
    - **QR Code Marker AR** - For marker-based tracking
    - **Location-Based AR** - For GPS-based AR
+
+### 🎯 Place & Control AR (Best Experience!)
+1. **Tap "View in AR"** button
+2. **Allow camera permissions** when prompted
+3. **Move your phone** slowly to detect surfaces
+4. **Tap on a surface** (floor, table, ground) to place the can
+5. **Interact with the can**:
+   - 📏 **Pinch** with two fingers to scale
+   - 🔄 **Drag** with one finger to rotate
+   - 👉 **Drag with two fingers** to move position
+
+Works on:
+- iOS 12+ with Safari (ARKit)
+- Android 8+ with Chrome (ARCore)
 
 ### Marker-Based AR
 1. **Allow camera permissions** when prompted
@@ -75,9 +100,11 @@ See [MARKERS.md](./MARKERS.md) for detailed marker instructions.
 ## 🛠️ Technical Details
 
 ### Technologies Used
+- **Model Viewer**: Google's web component for 3D models with WebXR AR support
 - **Vite**: Lightning-fast build tool and dev server
 - **A-Frame**: Web framework for building virtual reality experiences
-- **AR.js**: Lightweight library for Augmented Reality on the web
+- **AR.js**: Lightweight library for marker and location-based AR
+- **WebXR**: Native browser AR (ARKit/ARCore integration)
 - **WebGL**: For 3D rendering
 - **WebRTC**: For camera access
 
@@ -85,6 +112,7 @@ See [MARKERS.md](./MARKERS.md) for detailed marker instructions.
 ```
 AR/
 ├── index.html              # Mode selection page
+├── placement.html          # Place & Control AR mode (WebXR)
 ├── marker.html             # Barcode marker AR mode
 ├── location.html           # Location-based AR mode
 ├── doodles-can-2.glb       # Your 3D can model
@@ -98,16 +126,18 @@ AR/
 ```
 
 ### Features
-- ✅ Marker-based AR tracking
+- ✅ **Placement-based AR** with surface detection (WebXR)
+- ✅ **Touch gestures** for scale, rotate, and move
+- ✅ **Marker-based AR** tracking with barcode/QR support
+- ✅ **Location-based AR** with GPS positioning
 - ✅ 3D model loading (GLB/GLTF format)
 - ✅ Automatic model rotation animation
 - ✅ Mobile-optimized interface
 - ✅ Real-time camera feed
-- ✅ Cross-platform compatibility
+- ✅ Cross-platform compatibility (iOS/Android)
 - ✅ Production-ready build system (Vite)
 - ✅ Optimized assets and code splitting
-- ✅ HTTPS development server
-- ✅ Easy deployment to Vercel/Netlify
+- ✅ Multiple deployment targets (Vercel/Netlify/GitHub Pages)
 - ✅ Security headers and caching strategies
 
 ## 🔧 Customization
